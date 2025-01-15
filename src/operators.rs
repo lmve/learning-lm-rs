@@ -83,7 +83,7 @@ pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
     let _y = unsafe { y.data_mut() };
     let _x = x.data();
 
-    todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考");
+    // todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考");
     for i in 0..len {
         let silu_x = _x[i] / (1.0 + (-_x[i]).exp());
         _y[i] *= silu_x;
