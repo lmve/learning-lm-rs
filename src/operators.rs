@@ -71,7 +71,33 @@ pub fn masked_softmax(y: &mut Tensor<f32>) {
 }
 
 pub fn rms_norm(y: &mut Tensor<f32>, x: &Tensor<f32>, w: &Tensor<f32>, epsilon: f32) {
-    todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试")
+    // todo!("实现 rms_norm，计算前做一些必要的检查会帮助你后续调试");
+    // 检查输入张量的形状
+    assert_eq!(y.shape(), x.shape(), "输入张量 x 和 y 的形状必须相同");
+    let last_dim = x.shape().last().expect("输入张量必须至少有一维");
+    assert_eq!(w.size(), *last_dim, "权重 w 的长度必须与 x 的最后一维长度相同");
+
+    // 获取可变和不可变数据指针
+    let x_data = x.data();
+    let w_data = w.data();
+    let y_data = unsafe { y.data_mut() };
+
+    // 遍历每个向量
+    for i in 0..x.size() / *last_dim {
+        let start = i * *last_dim;
+        let end = start + *last_dim;
+
+        // 计算平方和
+        let sum_of_squares: f32 = x_data[start..end].iter().map(|&xi| xi * xi).sum();
+
+        // 计算均方根值
+        let rms = (sum_of_squares / *last_dim as f32 + epsilon).sqrt();
+
+        // 归一化并应用权重
+        for j in 0..*last_dim {
+            y_data[start + j] = w_data[j] * x_data[start + j] / rms;
+        }
+    }
 }
 
 // y = silu(x) * y
@@ -92,7 +118,7 @@ pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
         };
 
         // 计算 silu(x[i]) = sigmoid(x[i]) * x[i]
-        let silu_x = sigmoid_x * x[i];
+        let silu_x = sigmoid_x * _x[i];
 
         // 计算最终结果 y[i] = silu(x[i]) * y[i]
         _y[i] = silu_x * _y[i];
