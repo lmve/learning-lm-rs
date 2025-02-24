@@ -80,15 +80,25 @@ pub fn swiglu(y: &mut Tensor<f32>, x: &Tensor<f32>) {
     let len = y.size();
     assert!(len == x.size());
 
-    let _y = unsafe { y.data_mut() };
-    let _x = x.data();
+    let _y = unsafe { y.data_mut() };  // 可变的引用
+    let _x = x.data();                 // 不可变引用
 
     // todo!("实现 silu，这里给了一些前期准备工作的提示，你可以参考");
     for i in 0..len {
-        let silu_x = _x[i] / (1.0 + (-_x[i]).exp());
-        _y[i] *= silu_x;
+        let sigmoid_x = if _x[i] > 0.0 {  // 计算 sigmoid(x[i])
+            1.0 / (1.0 + (- _x[i]).exp())
+        } else {
+            _x[i].exp() / (1.0 + _x[i].exp())
+        };
+
+        // 计算 silu(x[i]) = sigmoid(x[i]) * x[i]
+        let silu_x = sigmoid_x * x[i];
+
+        // 计算最终结果 y[i] = silu(x[i]) * y[i]
+        _y[i] = silu_x * _y[i];
     }
 }
+
 
 // C = beta * C + alpha * A @ B^T
 // hint: You don't need to do an explicit transpose of B
